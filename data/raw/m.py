@@ -41,8 +41,6 @@ def etl_parent_flow():
 
 if __name__ == "__main__":
 
-    months = ['01','02','03','04','05','06','07','08','09','10','11','12']
-    year = '2021'
 
     etl_parent_flow()
     # prefect deployment build ./etl_web_to_gcs.py:main_flow -n "First ETL"
