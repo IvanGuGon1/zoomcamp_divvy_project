@@ -22,21 +22,17 @@ def my_favorite_function():
     return 42
 
 @task(log_prints=True)
-def load_gcs_bucket(df:pd.DataFrame,source_path:str,target_path:str):
+def load_gcs_bucket():
 
-    gcp_cloud_storage_bucket_block = GcsBucket.load("zoomcamp-de-project-bucket")
-    gcp_cloud_storage_bucket_block.upload_from_path(from_path=source_path, to_path=target_path, timeout=1000)
+    gcp_cloud_storage_bucket_block = GcsBucket.load("zoomcamp-de-project-bucket-new")
+
+    gcp_cloud_storage_bucket_block.upload_from_path(from_path='/home/ivang/projects/zoomcamp_divvy_project/202301-divvy-tripdata.csv', to_path='raw/202301-divvy-tripdata.csv', timeout=1000)
+
     print("Loaded to GCS")
 
 @flow(timeout_seconds=10000)
 def etl_parent_flow():
-    url = 'https://divvy-tripdata.s3.amazonaws.com/' + '202301-divvy-tripdata' + '.zip'
-    wget.download(url)
-    with zipfile.ZipFile('202301-divvy-tripdata' + '.zip', 'r') as zip_ref:
-        nombres_archivos = zip_ref.extractall('data/raw')
-    df = pd.read_csv('data/raw/202301-divvy-tripdata.csv')
-    print(df.head())
-    load_gcs_bucket(df,'data/raw/202301-divvy-tripdata.csv',"gs://divvy_bike_sharing/202301-divvy-tripdata.csv")
+    load_gcs_bucket()
 
 
 if __name__ == "__main__":
