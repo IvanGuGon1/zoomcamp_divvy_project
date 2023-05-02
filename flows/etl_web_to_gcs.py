@@ -62,18 +62,18 @@ def check_url(url:str) -> bool:
 
 
 @task(log_prints=True, tags=["extract"], cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
-def extract_data(url: str,filename: str):
+def extract_data(url: str,filename: str,folder: str):
 
     print(f"Starting download url {url}")
 
-   
+    data_folder = '../data/' + folder
     if os.path.isfile(filename + '.zip'):
         os.remove(filename + '.zip')
-        wget.download(url)
+        wget.download(url,out=data_folder+filename + '.zip')
     else:
-        wget.download(url)
+        wget.download(url,out=data_folder+filename + '.zip')
 
-    with zipfile.ZipFile(filename + '.zip', 'r') as zip_ref:
+    with zipfile.ZipFile(data_folder + filename + '.zip', 'r') as zip_ref:
         nombres_archivos = zip_ref.namelist()
 
         for nombre_archivo in nombres_archivos:
@@ -132,8 +132,10 @@ def transformation_add_cost_columns(df:pd.DataFrame):
 
 
 @task(log_prints=True)
-def transform_to_parquet(df:pd.DataFrame,filename):
+def transform_to_parquet(df:pd.DataFrame,filename,folder):
     #TODO: Add more cleaning steps
+
+    data_folder = '../data/' + folder
         
     df.ride_id = df.ride_id.astype(str)
     df.rideable_type = df.rideable_type.astype(str)
@@ -148,14 +150,14 @@ def transform_to_parquet(df:pd.DataFrame,filename):
     df.end_lat = df.end_lat.astype(float)
     df.end_lng = df.end_lng.astype(float)
     df.member_casual = df.member_casual.astype(str)
-    #df.distance = df.distance.astype(float)
-    #df.travel_time = df.travel_time.astype(float)
-    #df.cost = df.cost.astype(float)
+    df.distance = df.distance.astype(float)
+    df.travel_time = df.travel_time.astype(float)
+    df.cost = df.cost.astype(float)
 
     print("Dataframe cleaned Dataframe types: ", df.dtypes)
-    df.to_parquet(filename + '.parquet')
+    df.to_parquet(data_folder + filename + '.parquet')
     print(df.head())
-    return df
+    return data_folder + filename + '.parquet'
 
     
 
@@ -176,13 +178,13 @@ def main_flow(year:str,month:str,folder:str):
     target_path = folder + filename + '.parquet'
     valid_url = check_url(url)
     if valid_url == True:
-        df = extract_data(url,filename)
+        df = extract_data(url,filename,folder)
         df = transform_drop_na(df)
         df = transform_types(df)
-        #df = transformation_add_distance_column(df)
-        #df = transformation_add_travel_time_column(df)
-        #df = transformation_add_cost_columns(df)
-        df = transform_to_parquet(df,filename)
+        df = transformation_add_distance_column(df)
+        df = transformation_add_travel_time_column(df)
+        df = transformation_add_cost_columns(df)
+        source_path = transform_to_parquet(df,filename,folder)
         load_gcs_bucket(df,source_path,target_path)
         print("Finished")
         print("---------------------------------")
@@ -201,8 +203,11 @@ def etl_parent_flow(months:list[str], year:str,folder:str):
 if __name__ == "__main__":
 
     months = ['01','02','03','04','05','06','07','08','09','10','11','12']
-    year = '2021'
-    folder = 'processed/'
+    year = '2023'
+    #raw/ processed/ develop/
+    #test case of url url = 'https://divvy-tripdata.s3.amazonaws.com/202301-divvy-tripdata.zip
+    #url_for_test = 'https://divvy-tripdata.s3.amazonaws.com/202301-divvy-tripdata.zip'
+    folder = 'develop/'
     etl_parent_flow(months,year,folder)
     # prefect deployment build ./etl_web_to_gcs.py:main_flow -n "First ETL"
     # prefect deployment apply main_flow-deployment.yaml 
