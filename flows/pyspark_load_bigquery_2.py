@@ -22,7 +22,7 @@ data_input = args.data_input
 output = args.output
 
 spark = SparkSession.builder \
-    .appName('Python to BIGQUERY TEST') \
+    .appName('Python to BIGQUERY queries') \
     .getOrCreate()
 
 spark.conf.set('temporaryGcsBucket', 'dataproc-staging-europe-west6-925353208794-ci2rxhel')
