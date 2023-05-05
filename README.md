@@ -1,5 +1,7 @@
-The dataset of divvy bikes, a bicycle rental company that operates in the city of Chicago, has been selected.
 
+DIVVY BIKES SHARING, CHICAGO.
+
+The selected is dataset of divvy bikes, a bicycle rental company that operates in the city of Chicago.
 The objective is to enrich the divvy bikes dataset, which contains information related to the dates of each use, coordinates and type of service, with information related to Chicago's meteorological history, to check how weather affects the number of average daily kilometers route.
 
 
@@ -30,8 +32,5 @@ Architecture.
 Pipeline 1 - flows/etl_web_to_gcs_simple.py - The files are downloaded from the official website, 1 monthly file, they are decompressed, converted to parquet and uploaded to the Datalake in Google Cloud Storage
 Pipeline 2 - flows/etl_gcs_to_gcp.py - Datalake parquet files are obtained, data cleaning is performed, and various transformations and join with historical weather information are performed.
 PySpark queries - Queries are made to the DataWarehouse through PySpark on DataProc to know the aggregated data for the years 2022 and 2023.
-Dashboard - A dashboard with the information required in DataStudio.
-
-links.
-
-dashboard
+Dashboard - A dashboard with the information required in DataStudio. Link:
+https://lookerstudio.google.com/s/nW-6tIi1FWM
