@@ -3,3 +3,4 @@
 *.parquet
 *.zip
 *.ipynb
+!chicago_historical_weather.parquet
