@@ -58,7 +58,7 @@ args = parser.parse_args()
 data_input = args.data_input
 output = args.output
 
-
+#TODO: Seleccionar solo las columnas que necesito, mirar como puedo mejorar el rendimiento, aumentar la capacidad.
 spark = SparkSession.builder \
     .appName('Python to BIGQUERY') \
     .getOrCreate()
@@ -66,7 +66,6 @@ spark = SparkSession.builder \
 spark.conf.set('temporaryGcsBucket', 'dataproc-staging-europe-west6-925353208794-ci2rxhel')
 
 df_trips = spark.read.parquet(data_input,inferSchema=True)
-
 df_trips_with_date = df_trips.withColumn("date", to_date("started_at", "yyyy"))
 df_trips_with_date_casted = df_trips_with_date.withColumn("date", col("date").cast(StringType()))
 df_trips_with_date_casted.show(5)
@@ -112,7 +111,6 @@ df_trips_with_date_casted_result.show(5)
 
 print("-------")
 df_weather = spark.read.parquet('gs://divvy_bike_sharing/raw/chicago_historical_weather.parquet',inferSchema=True)
-print("-------")
 print("weather dataframe")
 
 df_weather_renamed = df_weather \
@@ -144,7 +142,7 @@ print("Hacemos el join")
 joined_df = df_trips_with_date_casted.join(df_weather_renamed_casted, on="date", how="inner")
 joined_df.show(5)
 joined_df.printSchema()
-joined_df.drop('__index_level_0__')
+#joined_df.drop('__index_level_0__')
 '''
 spark_schema = df_result.schema
 # Convierte el schema de PySpark en un schema de BigQuery.
@@ -175,6 +173,13 @@ for field in bigquery_schema:
     print(f"{field.name}: {field.field_type}")
 '''
 
+#TODO: Mirar en chatgpt si hay alguna forma de hacerlo mas eficiente.
+
+
+
+
+
 joined_df.write.mode("overwrite").format('bigquery') \
     .option('table', output) \
+    .option("compression", "snappy") \
     .save()

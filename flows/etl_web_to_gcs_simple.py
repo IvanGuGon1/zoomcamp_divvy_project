@@ -8,7 +8,7 @@ from datetime import timedelta
 from prefect_gcp.cloud_storage import GcsBucket
 import wget
 import requests
-from geopy import distance
+
 import logging
 import datetime
 import os
@@ -18,29 +18,6 @@ from pyspark.sql import functions as F
 
 from prefect import flow, task, get_run_logger
 
-def calculate_distance(row):
-    start_coords = (row['start_lat'], row['start_lng']) # coordenadas de origen
-    end_coords = (row['end_lat'], row['end_lng']) # coordenadas de destino
-    distance_metres = distance.distance(start_coords, end_coords).m # calcular la distancia en metros
-    return round(distance_metres,2)
-
-def calculate_cost(row):
-    bike_type = row['rideable_type']
-    member_casual = row['member_casual']
-    distance = row['distance']
-    total_price = 0
-    if bike_type == 'electric_bike':
-        if member_casual == 'member':
-            total_price = total_price + ( 1 + (0.17 * float(distance)))
-        elif member_casual == 'casual':
-            total_price = total_price + (1 + (0.42 * float(distance)))
-    elif bike_type == 'classic' or bike_type == 'docked_bike':
-        if member_casual == 'member':
-            total_price = total_price + ( 1 + (0.07 * float(distance)))
-        elif member_casual == 'casual':
-            total_price = total_price +  (1 + (0.15 * float(distance)))
-            
-    return total_price
 
 
 @task(log_prints=True)
@@ -89,10 +66,6 @@ def extract_data(url: str,filename: str,folder: str):
         
         return None
 
-@task(log_prints=True)
-def transform_drop_na(df:pd.DataFrame):
-    df = df.dropna()
-    return df
 
 @task(log_prints=True)
 def transform_types(df:pd.DataFrame):
@@ -101,32 +74,6 @@ def transform_types(df:pd.DataFrame):
     df.loc[:, 'ended_at'] = pd.to_datetime(df['ended_at'])
  
     print("Transformed types")
-    return df
-
-def calculate_distance(row):
-    start_coords = (row['start_lat'], row['start_lng']) # coordenadas de origen
-    end_coords = (row['end_lat'], row['end_lng']) # coordenadas de destino
-    distance_metres = distance.distance(start_coords, end_coords).m # calcular la distancia en metros
-    return round(distance_metres,2)
-
-@task(log_prints=True)
-def transformation_add_distance_column(df:pd.DataFrame):
-    #distance in meters
-    df.loc[:, 'distance'] = df.apply(calculate_distance, axis=1)
-    return df
-
-
-@task(log_prints=True)
-def transformation_add_travel_time_column(df:pd.DataFrame):
-    #time in minutes
-    df['travel_time'] = (df['ended_at'] - df['started_at']) / pd.Timedelta(minutes=1)
-    df['travel_time'] = round(df['travel_time'], 1)
-    return df
-
-@task(log_prints=True)
-def transformation_add_cost_columns(df:pd.DataFrame):
-    df["cost"] = df.apply(calculate_cost, axis=1)
-    df['cost'] = round(df['cost'], 3)
     return df
 
 
@@ -150,34 +97,15 @@ def transform_to_parquet(df:pd.DataFrame,filename,folder):
     df.end_lat = df.end_lat.astype(float)
     df.end_lng = df.end_lng.astype(float)
     df.member_casual = df.member_casual.astype(str)
-    df.distance = df.distance.astype(float)
-    df.travel_time = df.travel_time.astype(float)
-    df.cost = df.cost.astype(float)
+
+
+
 
     print("Dataframe cleaned Dataframe types: ", df.dtypes)
-    df.to_parquet(data_folder + filename + '.parquet')
+    df.to_parquet(data_folder + filename + '.parquet',index=False)
     print(df.head())
     return data_folder + filename + '.parquet'
 
-@task(log_prints=True)
-def transform_join_dataframes(df:pd.DataFrame):
-
-    #df_joined['datetime'] = pd.to_datetime(df_joined['datetime'])
-
-    #df['date'] = pd.to_datetime(df['start_lat'].dt.strftime('%Y-%m-%d'))
-    #df['date'] = df['date'].astype(str)
-
-    df['date'] = df['started_at'].dt.date
-    df['date'] = df['date'].astype(str)
-
-    weather_df = pd.read_parquet('chicago_historical_weather.parquet')
-    weather_df = weather_df.rename(columns={'datetime': 'date'})
-    weather_df['date'] = weather_df['date'].astype(str)
-    combined_df = df.merge(weather_df, on='date')
-
-    #TODO: Add more cleaning steps
-    print(combined_df.head())
-    return combined_df
 
 @task(log_prints=True)
 def load_gcs_bucket(df:pd.DataFrame,source_path:str,target_path:str):
@@ -197,12 +125,9 @@ def main_flow(year:str,month:str,folder:str):
     valid_url = check_url(url)
     if valid_url == True:
         df = extract_data(url,filename,folder)
-        df = transform_drop_na(df)
+ 
         df = transform_types(df)
-        df = transformation_add_distance_column(df)
-        df = transformation_add_travel_time_column(df)
-        df = transformation_add_cost_columns(df)
-        df = transform_join_dataframes(df)
+
         source_path = transform_to_parquet(df,filename,folder)
         load_gcs_bucket(df,source_path,target_path)
         print("Finished")
@@ -222,11 +147,13 @@ def etl_parent_flow(months:list[str], year:str,folder:str):
 if __name__ == "__main__":
 
     months = ['01','02','03','04','05','06','07','08','09','10','11','12']
-    year = '2023'
+    # bad filez : 4, 
+    months = ['12']
+    year = '2020'
     #raw/ processed/ develop/
     #test case of url url = 'https://divvy-tripdata.s3.amazonaws.com/202301-divvy-tripdata.zip
     #url_for_test = 'https://divvy-tripdata.s3.amazonaws.com/202301-divvy-tripdata.zip'
-    folder = 'processed/'
+    folder = 'raw/'
     etl_parent_flow(months,year,folder)
     # prefect deployment build ./etl_web_to_gcs.py:main_flow -n "First ETL"
     # prefect deployment apply main_flow-deployment.yaml 
