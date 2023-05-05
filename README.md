@@ -16,7 +16,7 @@ Cost per service - Price information for the use of bicycles has been obtained f
 Historical weather information - It has been obtained from the website visualcrossing.com, I am especially interested in the maximum temperature, the wind, and the general weather.
 
 
-USED ​​TECHNOLOGY.
+**USED ​​TECHNOLOGY**
 
 Orchestrator - Prefect Cloud.
 Cloud Provider - Google Cloud
@@ -27,7 +27,7 @@ Big Data Technology - Pyspark in DataProc.
 Programming language - Python
 
 
-Architecture.
+**ARCHITECTURE**.
 
 Pipeline 1 - flows/**etl_web_to_gcs_simple.py** - The files are downloaded from the official website, 1 monthly file, they are decompressed, converted to parquet and uploaded to the Datalake in Google Cloud Storage
 Pipeline 2 - flows/**etl_gcs_to_gcp.py** - Datalake parquet files are obtained, data cleaning is performed, and various transformations and join with historical weather information are performed.
