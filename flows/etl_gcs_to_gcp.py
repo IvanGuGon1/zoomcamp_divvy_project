@@ -85,38 +85,9 @@ def transformation_add_cost_columns(df:pd.DataFrame):
     df['cost'] = round(df['cost'], 3)
     return df
 
-@task()
-def transform_to_parquet(path: Path) -> pd.DataFrame:
-    """Data cleaning example"""
-    '''
-    df.ride_id = df.ride_id.astype(str)
-    df.rideable_type = df.rideable_type.astype(str)
-    df.started_at = df.started_at.astype('datetime64[ns]')
-    df.ended_at = df.ended_at.astype('datetime64[ns]')
-    df.start_station_name = df.start_station_name.astype(str)
-    df.start_station_id = df.start_station_id.astype(str)
-    df.end_station_name = df.end_station_name.astype(str)
-    df.end_station_id = df.end_station_id.astype(str)
-    df.start_lat = df.start_lat.astype(float)
-    df.start_lng = df.start_lng.astype(float)
-    df.end_lat = df.end_lat.astype(float)
-    df.end_lng = df.end_lng.astype(float)
-    df.member_casual = df.member_casual.astype(str)
-    df.distance = df.distance.astype(float)
-    df.travel_time = df.travel_time.astype(float)
-    df.cost = df.cost.astype(float)
-    df.to_parquet(path)
-    '''
-    print("add transformations")
-    return df
 
 @task(log_prints=True)
 def transform_join_dataframes(df:pd.DataFrame):
-
-    #df_joined['datetime'] = pd.to_datetime(df_joined['datetime'])
-
-    #df['date'] = pd.to_datetime(df['start_lat'].dt.strftime('%Y-%m-%d'))
-    #df['date'] = df['date'].astype(str)
 
     df['date'] = df['started_at'].dt.date
     df['date'] = df['date'].astype(str)
@@ -125,8 +96,6 @@ def transform_join_dataframes(df:pd.DataFrame):
     weather_df = weather_df.rename(columns={'datetime': 'date'})
     weather_df['date'] = weather_df['date'].astype(str)
     combined_df = df.merge(weather_df, on='date')
-
-    #TODO: Add more cleaning steps
     print(combined_df.head())
     return combined_df
 
@@ -141,7 +110,7 @@ def write_bq(df: pd.DataFrame) -> None:
         project_id="zoomcamp-de-project-385509",
         credentials=gcp_credentials_block.get_credentials_from_service_account(),
         chunksize=500_000,
-        if_exists="replace",
+        if_exists="append",
     )
 
 
@@ -156,8 +125,6 @@ def etl_gcs_to_bq(year,month):
     df = transformation_add_distance_column(df)
     df = transformation_add_travel_time_column(df)
     df = transformation_add_cost_columns(df)
-
-    #df = transform_to_parquet(path)
     df = transform_join_dataframes(df)
 
     write_bq(df)
@@ -173,6 +140,6 @@ def etl_parent_flow(
 if __name__ == "__main__":
 
     months = ['01','02','03','04', '05', '06', '07', '08', '09', '10', '11','12']
-    
+
     year = 2022
     etl_parent_flow(months, year)
