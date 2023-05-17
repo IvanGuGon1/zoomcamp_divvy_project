@@ -19,12 +19,12 @@ Historical weather information - It has been obtained from the website visualcro
 **USED ​​TECHNOLOGY**
 
 Orchestrator - Prefect Cloud.
-Cloud Provider - Google Cloud
-Datalake - Google Cloud Storage
-DataWareHouse - Big Query
+Cloud Provider - Google Cloud.
+Datalake - Google Cloud Storage.
+DataWareHouse - Big Query.
 DashBoard - Google Data Studio.
 Big Data Technology - Pyspark in DataProc.
-Programming language - Python
+Programming language - Python.
 
 
 **ARCHITECTURE**.
