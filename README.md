@@ -29,11 +29,11 @@ Programming language - Python
 
 **ARCHITECTURE**.  
 
-Pipeline 1 - flows/**etl_web_to_gcs_simple.py** - The files are downloaded from the official website, 1 monthly file, they are decompressed, converted to parquet and uploaded to the Datalake in Google Cloud Storage  
+**Pipeline 1** - flows/etl_web_to_gcs_simple.py - The files are downloaded from the official website, 1 monthly file, they are decompressed, converted to parquet and uploaded to the Datalake in Google Cloud Storage  
   
-Pipeline 2 - flows/**etl_gcs_to_gcp.py** - Datalake parquet files are obtained, data cleaning is performed, and various transformations and join with historical weather information are performed.  
+**Pipeline 2** - flows/etl_gcs_to_gcp.py - Datalake parquet files are obtained, data cleaning is performed, and various transformations and join with historical weather information are performed.  
   
-PySpark queries - flows/**pyspark_queries.py**. Queries are made to the DataWarehouse through PySpark on DataProc to know the aggregated data for the years 2022 and 2023. The info that if offer us is how the weather affect on the daily use of bicicles, using general weather info and maximum temperatura.  
+**PySpark queries** - flows/pyspark_queries.py. Queries are made to the DataWarehouse through PySpark on DataProc to know the aggregated data for the years 2022 and 2023. The info that if offer us is how the weather affect on the daily use of bicicles, using general weather info and maximum temperatura.  
   
-Dashboard - A dashboard with the information required in DataStudio. Link:  
+**Dashboard** - A dashboard with the information required in DataStudio. Link:  
 https://lookerstudio.google.com/s/nW-6tIi1FWM
